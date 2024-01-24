@@ -8,10 +8,26 @@ void ModeManual::_exit()
 
 void ModeManual::update()
 {
-    float desired_steering, desired_throttle, desired_lateral;
+    float desired_steering, desired_throttle, desired_lateral,
+        desired_roll, desired_pitch;
+
+    // grab channel positions
+    get_pilot_desired_roll_and_pitch(desired_roll, desired_pitch);
     get_pilot_desired_steering_and_throttle(desired_steering, desired_throttle);
     get_pilot_desired_lateral(desired_lateral);
 
+    uint8_t buf[8] = {0};
+    buf[0] = (uint8_t)desired_throttle;
+    buf[1] = (uint8_t)desired_pitch;
+    
+
+    // create CAN message
+    static AP_HAL::CANFrame frame = AP_HAL::CANFrame(1, buf, 8, false);
+    hal.can[0]->send(frame, 1, 1);
+
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "thrtl: %f, ptch: %f", desired_throttle, desired_pitch);
+
+    /*
     // apply manual steering expo
     desired_steering = 4500.0 * input_expo(desired_steering / 4500, g2.manual_steering_expo);
 
@@ -21,8 +37,7 @@ void ModeManual::update()
     }
 
     // walking robots support roll, pitch and walking_height
-    float desired_roll, desired_pitch, desired_walking_height;
-    get_pilot_desired_roll_and_pitch(desired_roll, desired_pitch);
+    
     get_pilot_desired_walking_height(desired_walking_height);
     g2.motors.set_roll(desired_roll);
     g2.motors.set_pitch(desired_pitch);
@@ -41,4 +56,5 @@ void ModeManual::update()
     g2.motors.set_throttle(desired_throttle);
     g2.motors.set_steering(desired_steering, (g2.manual_options & ManualOptions::SPEED_SCALING));
     g2.motors.set_lateral(desired_lateral);
+    */
 }

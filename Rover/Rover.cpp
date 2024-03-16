@@ -434,8 +434,14 @@ void Rover::update_logging2(void)
         camera_mount.write_log();
     }
 #endif
-}
 
+    uint8_t buf[8] = {0};
+    buf[0] = (uint8_t)(hal.rcin->read(2) / 10) - 60;
+    buf[2] = (uint8_t)(hal.rcin->read(1) / 10) - 60;
+
+    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x001, buf, 8, 0);
+    hal.can[0]->send(frame, 1, 1);
+}
 
 /*
   once a second events

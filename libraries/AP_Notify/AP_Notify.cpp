@@ -230,7 +230,7 @@ const AP_Param::GroupInfo AP_Notify::var_info[] = {
     // @Description: Control the volume of the buzzer
     // @Range: 0 100
     // @Units: %
-    AP_GROUPINFO("BUZZ_VOLUME", 8, AP_Notify, _buzzer_volume, 100),
+    AP_GROUPINFO("BUZZ_VOLUME", 8, AP_Notify, _buzzer_volume, 1),
 
     // @Param: LED_LEN
     // @DisplayName: Serial LED String Length

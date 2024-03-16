@@ -217,7 +217,7 @@ const AP_Param::Info AP_Periph_FW::var_info[] = {
     // @Units: %
     // @Increment: 1
     // @User: Advanced
-    GSCALAR(buzz_volume,     "BUZZER_VOLUME", 100),
+    GSCALAR(buzz_volume,     "BUZZER_VOLUME", 1),
 #endif
 
 #ifdef HAL_PERIPH_ENABLE_GPS

@@ -146,12 +146,6 @@ const AP_Param::GroupInfo AP_Vehicle::var_info[] = {
     AP_SUBGROUPINFO(kdecan, "KDE_",  19, AP_Vehicle, AP_KDECAN),
 #endif
 
-#if AP_SWINCAN_ENABLED
-    // @Group: SWIN_
-    // @Path: ../AP_SWINCAN/AP_SWINCAN.cpp
-    AP_SUBGROUPINFO(swincan, "SWIN_", 20, AP_Vehicle, AP_SWINCAN),
-#endif
-
 #if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_Rover)
     // @Param: FLTMODE_GCSBLOCK
     // @DisplayName: Flight mode block from GCS
@@ -419,10 +413,6 @@ void AP_Vehicle::setup()
 
 #if AP_KDECAN_ENABLED
     kdecan.init();
-#endif
-
-#if AP_SWINCAN_ENABLED
-    swincan.init();
 #endif
 
 #if AP_AIS_ENABLED

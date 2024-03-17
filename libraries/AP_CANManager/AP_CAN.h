@@ -23,6 +23,7 @@ public:
         EFI_NWPMU = 6,
         USD1 = 7,
         KDECAN = 8,
+        SWINCAN = 9,
         // 9 was MPPT_PacketDigital
         Scripting = 10,
         Benewake = 11,

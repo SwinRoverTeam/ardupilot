@@ -146,6 +146,12 @@ const AP_Param::GroupInfo AP_Vehicle::var_info[] = {
     AP_SUBGROUPINFO(kdecan, "KDE_",  19, AP_Vehicle, AP_KDECAN),
 #endif
 
+#if AP_SWINCAN_ENABLED
+    // @Group: SWIN_
+    // @Path: ../AP_SWINCAN/AP_SWINCAN.cpp
+    AP_SUBGROUPINFO(swincan, "SWIN_", 20, AP_Vehicle, AP_SWINCAN),
+#endif
+
 #if APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_Rover)
     // @Param: FLTMODE_GCSBLOCK
     // @DisplayName: Flight mode block from GCS
@@ -207,14 +213,14 @@ const AP_Param::GroupInfo AP_Vehicle::var_info[] = {
     // @Bitmask{Rover}: 10:Guided
     // @Bitmask{Rover}: 11:Dock
     // @User: Standard
-    AP_GROUPINFO("FLTMODE_GCSBLOCK", 20, AP_Vehicle, flight_mode_GCS_block, 0),
+    AP_GROUPINFO("FLTMODE_GCSBLOCK", 21, AP_Vehicle, flight_mode_GCS_block, 0),
 #endif // APM_BUILD_COPTER_OR_HELI || APM_BUILD_TYPE(APM_BUILD_ArduPlane) || APM_BUILD_TYPE(APM_BUILD_Rover)
 
 
 #if AP_NETWORKING_ENABLED
     // @Group: NET_
     // @Path: ../AP_Networking/AP_Networking.cpp
-    AP_SUBGROUPINFO(networking, "NET_", 21, AP_Vehicle, AP_Networking),
+    AP_SUBGROUPINFO(networking, "NET_", 22, AP_Vehicle, AP_Networking),
 
     /*
       the NET_Pn_ parameters need to be in AP_Vehicle as otherwise we
@@ -224,32 +230,32 @@ const AP_Param::GroupInfo AP_Vehicle::var_info[] = {
 #if AP_NETWORKING_NUM_PORTS > 0
     // @Group: NET_P1_
     // @Path: ../AP_Networking/AP_Networking_port.cpp
-    AP_SUBGROUPINFO(networking.ports[0], "NET_P1_", 22, AP_Vehicle, AP_Networking::Port),
+    AP_SUBGROUPINFO(networking.ports[0], "NET_P1_", 23, AP_Vehicle, AP_Networking::Port),
 #endif
 
 #if AP_NETWORKING_NUM_PORTS > 1
     // @Group: NET_P2_
     // @Path: ../AP_Networking/AP_Networking_port.cpp
-    AP_SUBGROUPINFO(networking.ports[1], "NET_P2_", 23, AP_Vehicle, AP_Networking::Port),
+    AP_SUBGROUPINFO(networking.ports[1], "NET_P2_", 24, AP_Vehicle, AP_Networking::Port),
 #endif
 
 #if AP_NETWORKING_NUM_PORTS > 2
     // @Group: NET_P3_
     // @Path: ../AP_Networking/AP_Networking_port.cpp
-    AP_SUBGROUPINFO(networking.ports[2], "NET_P3_", 24, AP_Vehicle, AP_Networking::Port),
+    AP_SUBGROUPINFO(networking.ports[2], "NET_P3_", 25, AP_Vehicle, AP_Networking::Port),
 #endif
 
 #if AP_NETWORKING_NUM_PORTS > 3
     // @Group: NET_P4_
     // @Path: ../AP_Networking/AP_Networking_port.cpp
-    AP_SUBGROUPINFO(networking.ports[3], "NET_P4_", 25, AP_Vehicle, AP_Networking::Port),
+    AP_SUBGROUPINFO(networking.ports[3], "NET_P4_", 26, AP_Vehicle, AP_Networking::Port),
 #endif
 #endif // AP_NETWORKING_ENABLED
 
 #if AP_FILTER_ENABLED
     // @Group: FILT
     // @Path: ../Filter/AP_Filter.cpp
-    AP_SUBGROUPINFO(filters, "FILT", 26, AP_Vehicle, AP_Filters),
+    AP_SUBGROUPINFO(filters, "FILT", 27, AP_Vehicle, AP_Filters),
 #endif
     AP_GROUPEND
 };
@@ -413,6 +419,10 @@ void AP_Vehicle::setup()
 
 #if AP_KDECAN_ENABLED
     kdecan.init();
+#endif
+
+#if AP_SWINCAN_ENABLED
+    swincan.init();
 #endif
 
 #if AP_AIS_ENABLED

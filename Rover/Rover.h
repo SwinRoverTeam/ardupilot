@@ -111,7 +111,7 @@ public:
     friend class RC_Channels_Rover;
 
     friend class Sailboat;
-    
+
     Rover(void);
 
 private:
@@ -174,8 +174,6 @@ private:
 
     // The rover's current location
     Location current_loc;
-
-    // create and instance of the 
 
     // Camera
 #if AP_CAMERA_ENABLED

@@ -88,6 +88,7 @@ AP_KDECAN_Driver::AP_KDECAN_Driver() : CANSensor("KDECAN")
 // parse inbound frames
 void AP_KDECAN_Driver::handle_frame(AP_HAL::CANFrame &frame)
 {
+    // send a log when CAN
     GCS_SEND_TEXT(MAV_SEVERITY_INFO, "got frame with %i", frame.id && frame.MaskStdID);
 }
 

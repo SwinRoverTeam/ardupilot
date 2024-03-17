@@ -423,7 +423,6 @@ private:
     static_assert(_failsafe_priorities[ARRAY_SIZE(_failsafe_priorities) - 1] == -1,
                   "_failsafe_priorities is missing the sentinel");
 
-
 public:
     void failsafe_check();
     // Motor test

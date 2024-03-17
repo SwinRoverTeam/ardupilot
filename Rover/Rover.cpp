@@ -435,12 +435,28 @@ void Rover::update_logging2(void)
     }
 #endif
 
+    // write motor drive commands
     uint8_t buf[8] = {0};
     buf[0] = (uint8_t)(hal.rcin->read(2) / 10) - 60;
     buf[2] = (uint8_t)(hal.rcin->read(1) / 10) - 60;
 
-    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x001, buf, 8, 0);
+    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x002, buf, 8, false);
     hal.can[0]->send(frame, 1, 1);
+
+    uint64_t timeout = 100;
+    bool read_select = true;
+    bool write_select = false;
+    bool ret = hal.can[0]->select(read_select, write_select, nullptr, timeout);
+
+    if (!ret || !read_select) {
+        // No frame available
+        // GCS_SEND_TEXT(MAV_SEVERITY_INFO, "no frame to read");
+    } else {
+        uint64_t time;
+        AP_HAL::CANIface::CanIOFlags flags {};
+        hal.can[0]->receive(frame, time, flags);
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "read frame: %s", (char*)frame.data);
+    }
 }
 
 /*
@@ -520,7 +536,6 @@ bool Rover::get_wp_crosstrack_error_m(float &xtrack_error) const
     xtrack_error = control_mode->crosstrack_error();
     return true;
 }
-
 
 Rover rover;
 AP_Vehicle& vehicle = rover;

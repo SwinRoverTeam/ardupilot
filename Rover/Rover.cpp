@@ -443,14 +443,15 @@ void Rover::update_logging2(void)
     AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x002, buf, 8, false);
     hal.can[0]->send(frame, 1, 1);
 
-    uint64_t timeout = 100;
+    // try read rfid info from CAN (any info really)
+    uint64_t timeout = 100000;
     bool read_select = true;
     bool write_select = false;
     bool ret = hal.can[0]->select(read_select, write_select, nullptr, timeout);
 
     if (!ret || !read_select) {
         // No frame available
-        // GCS_SEND_TEXT(MAV_SEVERITY_INFO, "no frame to read");
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "no frame to read");
     } else {
         uint64_t time;
         AP_HAL::CANIface::CanIOFlags flags {};

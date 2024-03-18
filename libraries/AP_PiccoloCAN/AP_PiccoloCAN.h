@@ -124,6 +124,9 @@ private:
         bool newCommand;
     } _ecu_info;
 
+    char fullMsg[2048];
+    int bytes_read = 0;
+
     // Piccolo CAN parameters
     AP_Int32 _esc_bm;       //! ESC selection bitmask
     AP_Int16 _esc_hz;       //! ESC update rate (Hz)

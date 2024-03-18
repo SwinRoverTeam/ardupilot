@@ -237,6 +237,8 @@ void AP_PiccoloCAN::loop()
         // Look for any message responses on the CAN bus
         while (read_frame(rxFrame, timeout)) {
 
+            handle_esc_message(rxFrame);
+
             // Extract group and device ID values from the frame identifier
             frame_id_group = (rxFrame.id >> 24) & 0x1F;
             frame_id_device = (rxFrame.id >> 8) & 0xFF;
@@ -252,10 +254,10 @@ void AP_PiccoloCAN::loop()
 
                 switch (PiccoloCAN_ActuatorType(frame_id_device)) {
                 case PiccoloCAN_ActuatorType::SERVO:
-                    handle_servo_message(rxFrame);
+                    //handle_servo_message(rxFrame);
                     break;
                 case PiccoloCAN_ActuatorType::ESC:
-                    handle_esc_message(rxFrame);
+                    
                     break;
                 default:
                     // Unknown actuator type
@@ -544,91 +546,18 @@ void AP_PiccoloCAN::send_servo_messages(void)
     }
 }
 
-
-// send ESC messages over CAN
 void AP_PiccoloCAN::send_esc_messages(void)
 {
-    AP_HAL::CANFrame txFrame {};
+    uint64_t timeout = AP_HAL::micros64() + 10000ULL;
 
-    uint64_t timeout = AP_HAL::micros64() + 1000ULL;
+    // write motor drive commands
+    uint8_t buf[8] = {0};
+    buf[0] = (uint8_t)(hal.rcin->read(2) / 10) - 60;
+    buf[2] = (uint8_t)(hal.rcin->read(1) / 10) - 60;
 
-    // No ESCs are selected? Don't send anything
-    if (_esc_bm == 0x00) {
-        return;
-    }
-
-    // System is armed - send out ESC commands
-    if (hal.util->get_soft_armed()) {
-
-        bool send_cmd = false;
-        int16_t cmd[4] {};
-        uint8_t idx;
-
-        // Transmit bulk command packets to 4x ESC simultaneously
-        for (uint8_t ii = 0; ii < PICCOLO_CAN_MAX_GROUP_ESC; ii++) {
-
-            send_cmd = false;
-
-            for (uint8_t jj = 0; jj < 4; jj++) {
-
-                idx = (ii * 4) + jj;
-
-                // Set default command value if an output field is unused
-                cmd[jj] = 0x7FFF;
-
-                // Skip an ESC if the motor channel is not enabled
-                if (!is_esc_channel_active(idx)) {
-                    continue;
-                }
-
-                /* Check if the ESC is software-inhibited.
-                 * If so, send a message to enable it.
-                 */
-                if (is_esc_present(idx) && !is_esc_enabled(idx)) {
-                    encodeESC_EnablePacket(&txFrame);
-                    txFrame.id |= (idx + 1);
-                    write_frame(txFrame, timeout);
-                }
-                else if (_escs[idx].newCommand) {
-                    send_cmd = true;
-                    cmd[jj] = _escs[idx].command;
-                    _escs[idx].newCommand = false;
-                } else {
-                    // A command of 0x7FFF is 'out of range' and will be ignored by the corresponding ESC
-                    cmd[jj] = 0x7FFF;
-                }
-            }
-
-            if (send_cmd) {
-                encodeESC_CommandMultipleESCsPacket(
-                    &txFrame,
-                    cmd[0],
-                    cmd[1],
-                    cmd[2],
-                    cmd[3],
-                    (PKT_ESC_SETPOINT_1 + ii)
-                );
-
-                // Broadcast the command to all ESCs
-                txFrame.id |= 0xFF;
-
-                write_frame(txFrame, timeout);
-            }
-        }
-
-    } else {
-        // System is NOT armed - send a "disable" message to all ESCs on the bus
-
-        // Command all ESC into software disable mode
-        encodeESC_DisablePacket(&txFrame);
-
-        // Set the ESC address to the broadcast ID (0xFF)
-        txFrame.id |= 0xFF;
-
-        write_frame(txFrame, timeout);
-    }
+    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x002, buf, 8, false);
+    write_frame(frame, timeout);
 }
-
 
 // interpret a servo message received over CAN
 bool AP_PiccoloCAN::handle_servo_message(AP_HAL::CANFrame &frame)
@@ -653,27 +582,40 @@ bool AP_PiccoloCAN::handle_servo_message(AP_HAL::CANFrame &frame)
     return _servos[addr].handle_can_frame(frame);
 }
 
-
-// interpret an ESC message received over CAN
 bool AP_PiccoloCAN::handle_esc_message(AP_HAL::CANFrame &frame)
 {
-    // The ESC address is the lower byte of the frame ID
-    uint8_t addr = frame.id & 0xFF;
+    uint32_t std_id = frame.id & AP_HAL::CANFrame::MaskStdID;
+    //GCS_SEND_TEXT(MAV_SEVERITY_INFO, "got something from %lu", std_id);
 
-    // Ignore any ESC with node ID of zero
-    if (addr == 0x00) {
+    if (std_id != 0x307)
+    {
         return false;
     }
 
-    // Subtract to get the address in memory
-    addr -= 1;
+    bool finalMsg = false;
 
-    // Maximum number of ESCs allowed
-    if (addr >= PICCOLO_CAN_MAX_NUM_ESC) {
-        return false;
+    if (frame.data[0] < 128) {
+        finalMsg = true;
     }
 
-    return _escs[addr].handle_can_frame(frame);
+    frame.data[0] = frame.data[0] & 0x7F;
+
+    int i = 0;
+    for (; i < 8; i++) {
+        if (frame.data[i] == 0x0) {
+            break;
+        }
+        fullMsg[i + bytes_read] = frame.data[i];
+    }
+    bytes_read += i;
+
+    if (finalMsg) {
+        fullMsg[bytes_read] = 0;
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "%s", fullMsg);
+        bytes_read = 0;
+    }
+
+    return true;
 }
 
 #if AP_EFI_CURRAWONG_ECU_ENABLED

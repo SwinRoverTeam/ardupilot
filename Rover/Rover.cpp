@@ -434,29 +434,6 @@ void Rover::update_logging2(void)
         camera_mount.write_log();
     }
 #endif
-
-    // try read rfid info from CAN (any info really)
-    AP_HAL::CANFrame frame;
-
-    uint64_t timeout = 10000;
-    bool read_select = true;
-    bool write_select = false;
-    bool ret = hal.can[0]->select(read_select, write_select, nullptr, timeout);
-
-    if (ret && read_select) {
-        uint64_t time;
-        AP_HAL::CANIface::CanIOFlags flags {};
-        hal.can[0]->receive(frame, time, flags);
-        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "read frame: %s", (char*)frame.data);
-    }
-
-    // write motor drive commands
-    uint8_t buf[8] = {0};
-    frame = AP_HAL::CANFrame(0x002, buf, 8, false);
-    buf[0] = (uint8_t)(hal.rcin->read(2) / 10) - 60;
-    buf[2] = (uint8_t)(hal.rcin->read(1) / 10) - 60;
-
-    hal.can[0]->send(frame, 1, 1);
 }
 
 /*

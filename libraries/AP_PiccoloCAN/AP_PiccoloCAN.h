@@ -29,7 +29,7 @@
 #include "AP_PiccoloCAN_Servo.h"
 #include <AP_EFI/AP_EFI_Currawong_ECU.h>
 
-#if HAL_PICCOLO_CAN_ENABLE
+//#if HAL_PICCOLO_CAN_ENABLE
 
 #define PICCOLO_MSG_RATE_HZ_MIN 1
 #define PICCOLO_MSG_RATE_HZ_MAX 500
@@ -79,6 +79,9 @@ public:
 
     // test if the Piccolo CAN driver is ready to be armed
     bool pre_arm_check(char* reason, uint8_t reason_len);
+
+    // process controlls from mavlink
+    void process_mavlink(const mavlink_message_t &msg);
 
 private:
 
@@ -140,4 +143,4 @@ private:
     HAL_Semaphore _telem_sem;
 };
 
-#endif // HAL_PICCOLO_CAN_ENABLE
+//#endif // HAL_PICCOLO_CAN_ENABLE

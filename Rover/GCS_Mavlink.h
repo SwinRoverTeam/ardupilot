@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GCS_MAVLink/GCS.h>
+#include <AP_PiccoloCAN/AP_PiccoloCAN.h>
 
   // set 0 in 4.6, remove feature in 4.7:
 #ifndef AP_MAVLINK_MAV_CMD_NAV_SET_YAW_SPEED_ENABLED
@@ -37,6 +38,8 @@ protected:
     void send_pid_tuning() override;
 
 private:
+
+    AP_PiccoloCAN *pcan = AP_PiccoloCAN::get_pcan(0);
 
     void handleMessage(const mavlink_message_t &msg) override;
     bool handle_guided_request(AP_Mission::Mission_Command &cmd) override;

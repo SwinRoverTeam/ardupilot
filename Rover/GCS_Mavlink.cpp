@@ -779,6 +779,9 @@ MAV_RESULT GCS_MAVLINK_Rover::handle_command_int_do_reposition(const mavlink_com
 
 void GCS_MAVLINK_Rover::handleMessage(const mavlink_message_t &msg)
 {
+    // send mavlink to PiccoloCAN for processing (hack)
+    pcan->process_mavlink(msg);
+
     switch (msg.msgid) {
 
     case MAVLINK_MSG_ID_SET_ATTITUDE_TARGET:

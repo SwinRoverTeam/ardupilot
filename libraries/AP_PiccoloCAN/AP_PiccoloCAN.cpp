@@ -546,6 +546,37 @@ void AP_PiccoloCAN::send_servo_messages(void)
     }
 }
 
+void AP_PiccoloCAN::process_mavlink(const mavlink_message_t &msg)
+{
+    // decode packet
+    mavlink_command_long_t packet;
+    mavlink_msg_command_long_decode(&msg, &packet);
+
+    switch (packet.command)
+    {
+    case MAV_CMD_DO_SET_SERVO:
+        // read in arm positions and speed (degs)
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "1:%f 2:%f 3:%f", packet.param2, packet.param3, packet.param4);
+
+        if (packet.param1 == 1) {
+            // move arm
+        } else {
+            // home arm
+        }
+
+        break;
+
+    case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
+        // go to next cam
+        if (packet.param1 == 1) {
+            current_cam++;
+        } else {
+            current_cam--;
+        }
+        break;
+    }
+}
+
 void AP_PiccoloCAN::send_esc_messages(void)
 {
     uint64_t timeout = AP_HAL::micros64() + 10000ULL;

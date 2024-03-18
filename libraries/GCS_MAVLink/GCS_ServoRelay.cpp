@@ -15,6 +15,7 @@ MAV_RESULT GCS_MAVLINK::handle_servorelay_message(const mavlink_command_int_t &p
 
     switch (packet.command) {
     case MAV_CMD_DO_SET_SERVO:
+    
         if (handler->do_set_servo(packet.param1, packet.param2)) {
             result = MAV_RESULT_ACCEPTED;
         }

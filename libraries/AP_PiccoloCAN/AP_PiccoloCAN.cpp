@@ -555,15 +555,38 @@ void AP_PiccoloCAN::process_mavlink(const mavlink_message_t &msg)
     switch (packet.command)
     {
     case MAV_CMD_DO_SET_SERVO:
+        int code = 0xF6;
+        int speed = 0x100;
+        int acc = 0x3;
+        int crc = 0;
+        int dir = 0;
         // read in arm positions and speed (degs)
-        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "1:%f 2:%f 3:%f", packet.param2, packet.param3, packet.param4);
-
-        if (packet.param1 == 1) {
-            // move arm
-        } else {
-            // home arm
+        //GCS_SEND_TEXT(MAV_SEVERITY_INFO, "1:%f 2:%f 3:%f", packet.param2, packet.param3, packet.param4);
+        switch (packet.param2) {
+            case 1:
+                //Move arm forward
+                dir = 0x0;
+                break;
+            case -1:
+                //Move arm backwards
+                dir = 0x80;
+                break;
+            default:
+                //Stop arm
+                dir = 0x80;
+                speed = 0x0;
+                break;
         }
-
+        uint64_t timeout = AP_HAL::micros64() + 10000ULL;
+        crc += packet.param1;
+        crc += code;
+        crc += dir + speed >> 8;
+        crc += speed & 0xFF;
+        crc += acc;
+        crc = crc & 0xFF;
+        int buf[5] = {code, dir + speed >> 8, speed & 0xFF, acc, crc};
+        AP_HAL::CANFrame frame = AP_HAL::CANFrame(packet.param1 + 0x301, buf, 5, false);
+        write_frame(frame, timeout);
         break;
 
     case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
@@ -593,6 +616,7 @@ void AP_PiccoloCAN::send_esc_messages(void)
 // interpret a servo message received over CAN
 bool AP_PiccoloCAN::handle_servo_message(AP_HAL::CANFrame &frame)
 {
+    //Add code here
     // The servo address is the lower byte of the frame ID
     uint8_t addr = frame.id & 0xFF;
 

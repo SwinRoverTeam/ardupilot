@@ -445,6 +445,8 @@ void Rover::update_logging2(void)
 
     AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x02, buf, 8, false);
     hal.can[0]->send(frame, timeout, AP_HAL::CANIface::PassThroughMode);
+
+    hal.scheduler->delay(1);
 }
 
 /*

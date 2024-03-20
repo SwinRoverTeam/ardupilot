@@ -119,6 +119,8 @@ private:
     AP_HAL::CANIface* _can_iface;
     HAL_BinarySemaphore sem_handle;
 
+    int current_cam = 0;
+
     AP_PiccoloCAN_Servo _servos[PICCOLO_CAN_MAX_NUM_SERVO];
     AP_PiccoloCAN_ESC _escs[PICCOLO_CAN_MAX_NUM_ESC];
 

@@ -113,6 +113,8 @@ private:
     bool handle_ecu_message(AP_HAL::CANFrame &frame);
 #endif
 
+    void stop_all_motors(void);
+
     bool _initialized;
     char _thread_name[16];
     uint8_t _driver_index;

@@ -198,7 +198,7 @@ void AP_PiccoloCAN::loop()
         // Calculate the output rate for ESC commands
         _esc_hz.set(constrain_int16(_esc_hz, PICCOLO_MSG_RATE_HZ_MIN, PICCOLO_MSG_RATE_HZ_MAX));
 
-        uint16_t escCmdRateMs = 1000 / _esc_hz;
+        uint16_t escCmdRateMs = 10;
 
         // Calculate the output rate for servo commands
         _srv_hz.set(constrain_int16(_srv_hz, PICCOLO_MSG_RATE_HZ_MIN, PICCOLO_MSG_RATE_HZ_MAX));
@@ -552,21 +552,26 @@ void AP_PiccoloCAN::process_mavlink(const mavlink_message_t &msg)
     mavlink_command_long_t packet;
     mavlink_msg_command_long_decode(&msg, &packet);
 
+    // check for stop all cmd
+    if ((uint32_t)packet.param1 == 10) {
+        stop_all_motors();
+    }
+
     switch (packet.command)
     {
     case MAV_CMD_DO_SET_SERVO:
         {
-        int code = 0xF6;
-        int speed = 0x100;
-        int acc = 0x3;
-        int dir = 0;
-        // read in arm positions and speed (degs)
-        //GCS_SEND_TEXT(MAV_SEVERITY_INFO, "1:%f 2:%f 3:%f", packet.param2, packet.param3, packet.param4);
+
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "running server recv");
+        
+        uint8_t code = 0xF6;
+        uint16_t speed = 0x100;
+        uint8_t dir = 0x0;
+
         if ((int)packet.param2 == 1) {
             //Move arm forward
             dir = 0x0;
-        }
-        else if ((int)packet.param2 == -1) {
+        } else if ((int)packet.param2 == -1) {
             //Move arm backwards
             dir = 0x80;
         } else {
@@ -575,21 +580,20 @@ void AP_PiccoloCAN::process_mavlink(const mavlink_message_t &msg)
             speed = 0x0;
         }
 
-        uint64_t timeout = AP_HAL::micros64() + 10000ULL;
-
         // calculate crc for motor drivers
-        int crc = (int)packet.param1 + code + dir + (speed >> 8) + (speed & 0xFF) + acc;
-        crc = crc & 0xFF;
+        uint64_t crc = ((uint8_t)packet.param1 + 1) + code + dir + (speed >> 8) + (speed & 0xFF) + 0x3;
+        crc &= 0xFF;
 
         // make message
-        int buf[5];
-        buf[0] = code;
+        uint8_t buf[5] = {0};
+        buf[0] =  code;
         buf[1] =  dir + (speed >> 8);
-        buf[2] = speed & 0xFF;
-        buf[3] = acc;
-        buf[4] = crc;
+        buf[2] =  (speed & 0xFF);
+        buf[3] =  0x3;
+        buf[4] =  (uint8_t)crc;
 
-        AP_HAL::CANFrame frame = AP_HAL::CANFrame((uint32_t)packet.param1 + 0x301, (const uint8_t*)buf, 5, false);
+        uint64_t timeout = AP_HAL::micros64() + 10000ULL;
+        AP_HAL::CANFrame frame = AP_HAL::CANFrame((uint32_t)packet.param1 + 0x301, buf, (uint8_t) 5, false);
         write_frame(frame, timeout);
 
         break;
@@ -609,17 +613,32 @@ void AP_PiccoloCAN::process_mavlink(const mavlink_message_t &msg)
     }
 }
 
-void AP_PiccoloCAN::send_esc_messages(void)
+void AP_PiccoloCAN::stop_all_motors(void)
 {
     uint64_t timeout = AP_HAL::micros64() + 10000ULL;
+     // make message
+    uint8_t buf[5] = {0};
+    buf[0] =  0xF6;
+    buf[1] =  0x0;
+    buf[2] =  0;
+    buf[3] =  0x3;
 
-    // write motor drive commands
-    uint8_t buf[8] = {0};
-    buf[0] = (uint8_t)(hal.rcin->read(2) / 10) - 60;
-    buf[2] = (uint8_t)(hal.rcin->read(1) / 10) - 60;
+    for (int i = 0; i < 6; i++) {
 
-    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x002, buf, 8, false);
-    write_frame(frame, timeout);
+        // calculate crc for motor drivers
+        uint64_t crc = (i + 1) + 0xF6 + 0x0 + 0x3;
+        crc &= 0xFF;
+
+        buf[4] = crc;
+
+        // send stop motor frame
+        AP_HAL::CANFrame frame = AP_HAL::CANFrame(i + 0x301, buf, (uint8_t) 5, false);
+        write_frame(frame, timeout);
+    }
+}
+
+void AP_PiccoloCAN::send_esc_messages(void)
+{
 }
 
 // interpret a servo message received over CAN

@@ -434,6 +434,17 @@ void Rover::update_logging2(void)
         camera_mount.write_log();
     }
 #endif
+
+    // send some motor commands
+    uint64_t timeout = AP_HAL::micros64() + 10000ULL;
+
+    // write motor drive commands
+    uint8_t buf[8] = {0};
+    buf[0] = (uint8_t)(hal.rcin->read(2) / 10);
+    buf[2] = (uint8_t)(hal.rcin->read(1) / 10);
+
+    AP_HAL::CANFrame frame = AP_HAL::CANFrame(0x02, buf, 8, false);
+    hal.can[0]->send(frame, timeout, AP_HAL::CANIface::PassThroughMode);
 }
 
 /*
